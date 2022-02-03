@@ -1,25 +1,13 @@
-import org.lwjgl.opengl.GL;
-
-import static org.lwjgl.glfw.GLFW.*;
+import graphics.Window;
+import common.Size;
+import app.MainActivity;
 
 public class HomeNetShare {
     public static void main(String[] args) {
         try {
-            if (!glfwInit()) {
-                throw new Exception("Failed to load glfw.");
-            }
-            glfwDefaultWindowHints();
-            long handle = glfwCreateWindow(800, 600, "Hello, world!", 0, 0);
-            glfwMakeContextCurrent(handle);
-
-            GL.createCapabilities();
-
-            while (!glfwWindowShouldClose(handle)) {
-                glfwPollEvents();
-                glfwSwapBuffers(handle);
-            }
+            new Window(new Size(800, 600), "HomeNetShare", new MainActivity());
         }
-        catch (Exception exception) {
+        catch (RuntimeException exception) {
             exception.printStackTrace();
         }
     }
