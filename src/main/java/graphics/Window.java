@@ -47,6 +47,8 @@ class ImGuiDevice extends IFrameWorker {
     }
 
     public void endFrame() {
+        glClear(GL_COLOR_BUFFER_BIT);
+
         ImGui.render();
         implGl3.renderDrawData(ImGui.getDrawData());
 
@@ -60,8 +62,8 @@ class ImGuiDevice extends IFrameWorker {
 }
 
 public class Window {
-    private long handle;
-    private ImGuiDevice imGuiDevice;
+    private final long handle;
+    private final ImGuiDevice imGuiDevice;
 
     public static class Flags {
         public static final int NONE = 0;
@@ -69,6 +71,7 @@ public class Window {
 
     public static abstract class Activity {
         abstract public void onUpdate();
+        public void close() {}
     }
 
     public Window(Size size, String title, Activity activity, int flags) throws RuntimeException {
@@ -106,8 +109,6 @@ public class Window {
     }
 
     private void endFrame() {
-        glClear(GL_COLOR_BUFFER_BIT);
-
         imGuiDevice.endFrame();
         glfwSwapBuffers(handle);
     }
