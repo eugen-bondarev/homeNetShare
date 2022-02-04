@@ -4,9 +4,14 @@ import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Date;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
-public class Client extends Thread {
+public class Client extends Network {
     private String ip;
     private int port;
 
@@ -16,39 +21,34 @@ public class Client extends Thread {
     }
 
     public void run() {
-        try (Socket socket = new Socket(ip, port)) {
+        try {
+            socket = new Socket(ip, port);
+            InputStream input = socket.getInputStream();
             OutputStream output = socket.getOutputStream();
-            PrintWriter writer = new PrintWriter(output, true);
 
-            String text;
-
-            Scanner keyboard = new Scanner(System.in);
-
-            do {
-                text = keyboard.nextLine();
-
-//                InputFile f = new InputFile("C:\\Users\\azare\\Desktop\\test.png");
-//                byte[] bytes = ByteBuffer.allocate(4).putInt(f.getBinaryData().length).array();
-//                output.write(bytes);
-//                output.write(f.getBinaryData());
-//                output.flush();
-
-                InputStream input = socket.getInputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-
-                String time = reader.readLine();
-
-                System.out.println(time);
-
-            } while (!text.equals("bye"));
-
-            socket.close();
+            while (socket.isConnected()) {
+                if (input.available() != 0) {
+                    Broadcast fileBroadcast = Broadcast.readFromInputStream(input);
+                    String[] split = fileBroadcast.getName().split(Pattern.quote("."), 0);
+                    split[0] = split[0] + new Date().getTime();
+                    System.out.println(String.join(".", split));
+                    fileBroadcast.save(String.join(".", split));
+                }
+            }
 
         } catch (UnknownHostException ex) {
             System.out.println("Server not found: " + ex.getMessage());
 
         } catch (IOException ex) {
             System.out.println("I/O error: " + ex.getMessage());
+        }
+    }
+
+    public void close() {
+        try {
+            socket.close();
+        } catch (IOException exception) {
+            exception.printStackTrace();
         }
     }
 }

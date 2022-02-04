@@ -92,7 +92,7 @@ public class Window {
             activity.onUpdate();
             endFrame();
         }
-
+        activity.close();
         imGuiDevice.close();
 
         glfwDestroyWindow(handle);
