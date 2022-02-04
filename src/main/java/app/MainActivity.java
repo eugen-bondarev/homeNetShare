@@ -8,12 +8,24 @@ import graphics.Window;
 import imgui.type.ImInt;
 import imgui.type.ImString;
 
+import java.awt.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Vector;
 
 public class MainActivity {
-    private ImString ip = new ImString("192.168.178.30");
-    private ImInt port = new ImInt(8080);
-    private ImString fileToSend = new ImString("C:\\Users\\azare\\Desktop\\test\\pic.png");
+    enum Mode {
+        None,
+        Server,
+        Client,
+        Both
+    }
+
+    private Mode mode = Mode.None;
+
+    private final ImString ip = new ImString("192.168.178.30");
+    private final ImInt port = new ImInt(8080);
 
     RemovableList<ImString> filesToShare = new RemovableList<>();
     Vector<String> vecFilesToShare = new Vector<>();
@@ -22,16 +34,25 @@ public class MainActivity {
     private Client client;
 
     // Client data
-    private ImString imGuiOutputDir = new ImString("C:\\Users\\azare\\Desktop\\test", 512);
-    private Client.Bridge clientBridge = new Client.Bridge();
+    private ImString imGuiOutputDir;
+    private final Client.Bridge clientBridge = new Client.Bridge();
 
-    private Window window;
+    private final Window window;
+
+    private void setOutputDir() {
+        String path = System.getProperty("user.home") + "/AppData/Local/homeNetShare/output";
+        try {
+            Files.createDirectories(Paths.get(path));
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        }
+        imGuiOutputDir = new ImString(path, 512);
+        clientBridge.outputDir = imGuiOutputDir.get();
+    }
 
     public MainActivity(Window window) {
         this.window = window;
-
-        fileToSend.resize(512);
-        filesToShare.getList().add(new ImString("C:\\Users\\azare\\Desktop\\test\\pic.png"));
+        setOutputDir();
     }
 
     private void share() {
@@ -42,7 +63,22 @@ public class MainActivity {
     }
 
     public void onUpdate() {
-        ImGui.begin("Server");
+        if (mode == Mode.None) {
+            ImGui.begin("Start menu");
+                if (ImGui.button("Share files")) {
+                    mode = Mode.Server;
+                }
+
+                ImGui.sameLine();
+
+                if (ImGui.button("Receive files")) {
+                    mode = Mode.Client;
+                }
+            ImGui.end();
+        }
+
+        if (mode == Mode.Server || mode == Mode.Both) {
+            ImGui.begin("Server");
             ImGui.text("Server info:");
             ImGui.inputText("IP", ip);
             ImGui.inputInt("Port", port);
@@ -91,9 +127,11 @@ public class MainActivity {
                 share();
             }
 
-        ImGui.end();
+            ImGui.end();
+        }
 
-        ImGui.begin("Client");
+        if (mode == Mode.Client || mode == Mode.Both) {
+            ImGui.begin("Client");
             ImGui.text("Client info:");
             ImGui.inputText("IP", ip);
             ImGui.inputInt("Port", port);
@@ -105,30 +143,43 @@ public class MainActivity {
                 }
             } else {
                 if (ImGui.button("Disconnect from server")) {
-                    client.close();
+                    client.commands.add("/exit");
                     client = null;
                 }
-            }
-            if (ImGui.button("List shared files")) {
-                client.commands.add("/getSharedFiles");
-            }
-            ImGui.separator();
+                if (ImGui.button("List shared files")) {
+                    client.commands.add("/getSharedFiles");
+                }
+                ImGui.separator();
 
-            if (ImGui.inputText("Output dir", imGuiOutputDir)) {
-                clientBridge.outputDir = imGuiOutputDir.get();
-            }
+                if (ImGui.inputText("Output dir", imGuiOutputDir)) {
+                    clientBridge.outputDir = imGuiOutputDir.get();
+                }
+                ImGui.sameLine();
+                if (ImGui.button("Open")) {
+                    try {
+                        Desktop.getDesktop().open(new java.io.File(imGuiOutputDir.get()));
+                    } catch (IOException exception) {
+                        exception.printStackTrace();
+                    }
+                }
 
-            for (int i = 0; i < clientBridge.sharedFiles.size(); ++i) {
-                if (!clientBridge.sharedFiles.get(i).isEmpty() && ImGui.button(clientBridge.sharedFiles.get(i))) {
-                    String cmd = String.format("/getFile %s", clientBridge.sharedFiles.get(i));
-                    client.commands.add(cmd);
+                for (int i = 0; i < clientBridge.sharedFiles.size(); ++i) {
+                    if (!clientBridge.sharedFiles.get(i).isEmpty() && ImGui.button(clientBridge.sharedFiles.get(i))) {
+                        String cmd = String.format("/getFile %s", clientBridge.sharedFiles.get(i));
+                        client.commands.add(cmd);
+                    }
                 }
             }
-        ImGui.end();
+            ImGui.end();
+        }
     }
 
     public void close() {
         if (server != null) { server.close(); }
-        if (client != null) { client.close(); }
+
+        if (client != null) {
+            client.commands.add("/exit");
+        }
+        client = null;
     }
 }

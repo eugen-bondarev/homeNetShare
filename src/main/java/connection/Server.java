@@ -64,6 +64,7 @@ class ClientThread extends Thread {
                     case "/exit" -> {
                         socket.close();
                         shouldClose = true;
+                        continue;
                     }
                 }
                 System.out.printf("Unknown msg: %s\n", msg);

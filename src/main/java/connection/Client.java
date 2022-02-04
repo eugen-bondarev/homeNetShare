@@ -38,8 +38,6 @@ public class Client extends Network {
             InputStream input = socket.getInputStream();
             OutputStream output = socket.getOutputStream();
 
-            Scanner keyboard = new Scanner(System.in);
-
             boolean shouldClose = false;
             while (!shouldClose)
             {
@@ -74,21 +72,12 @@ public class Client extends Network {
                         shouldClose = true;
                     }
                 }
-
                 commands.clear();
             }
         } catch (UnknownHostException ex) {
             System.out.println("Server not found: " + ex.getMessage());
         } catch (IOException ex) {
             System.out.println("I/O error: " + ex.getMessage());
-        }
-    }
-
-    public void close() {
-        try {
-            socket.close();
-        } catch (IOException exception) {
-            exception.printStackTrace();
         }
     }
 }
