@@ -10,7 +10,13 @@ import imgui.ImGui;
 import imgui.flag.ImGuiConfigFlags;
 import imgui.glfw.ImGuiImplGlfw;
 import imgui.gl3.ImGuiImplGl3;
+import org.lwjgl.glfw.GLFWDropCallback;
+import org.lwjgl.glfw.GLFWDropCallbackI;
 import org.lwjgl.opengl.GL;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Vector;
 
 abstract class IFrameWorker {
     abstract public void beginFrame();
@@ -69,12 +75,14 @@ public class Window {
         public static final int NONE = 0;
     }
 
-    public static abstract class Activity {
-        abstract public void onUpdate();
-        public void close() {}
+    private List<String> dragAndDropItems = new ArrayList<>();
+    private boolean dragAndDropFlag = false;
+
+    public List<String> getDragAndDropItems() {
+        return dragAndDropItems;
     }
 
-    public Window(Size size, String title, Activity activity, int flags) throws RuntimeException {
+    public Window(Size size, String title, int flags) throws RuntimeException {
         if (!glfwInit()) {
             throw new RuntimeException("Failed to initialize glfw.");
         }
@@ -83,33 +91,43 @@ public class Window {
         glfwMakeContextCurrent(handle);
         glfwSwapInterval(1);
 
+        glfwSetDropCallback(handle, (window, count, names) -> {
+            for (int i = 0; i < count; ++i) {
+                String name = GLFWDropCallback.getName(names, i);
+                dragAndDropItems.add(name);
+            }
+            dragAndDropFlag = true;
+        });
+
         GL.createCapabilities();
 
         imGuiDevice = new ImGuiDevice(handle);
-
-        while (!glfwWindowShouldClose(handle)) {
-            beginFrame();
-            activity.onUpdate();
-            endFrame();
-        }
-        activity.close();
-        imGuiDevice.close();
-
-        glfwDestroyWindow(handle);
-        glfwTerminate();
     }
 
-    public Window(Size size, String title, Activity activity) {
-        this(size, title, activity, Flags.NONE);
+    public Window(Size size, String title) {
+        this(size, title, Flags.NONE);
     }
 
-    private void beginFrame() {
+    public boolean shouldClose() {
+        return glfwWindowShouldClose(handle);
+    }
+
+    public void beginFrame() {
         glfwPollEvents();
         imGuiDevice.beginFrame();
     }
 
-    private void endFrame() {
+    public void endFrame() {
         imGuiDevice.endFrame();
         glfwSwapBuffers(handle);
+
+        dragAndDropItems.clear();
+        dragAndDropFlag = false;
+    }
+
+    public void close() {
+        imGuiDevice.close();
+        glfwDestroyWindow(handle);
+        glfwTerminate();
     }
 }

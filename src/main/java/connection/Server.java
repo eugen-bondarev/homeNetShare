@@ -1,51 +1,77 @@
 package connection;
 
+import common.File;
+import connection.messages.FileMessage;
+import connection.messages.TextMessage;
+
 import java.io.*;
+import java.util.*;
+import java.net.Socket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.*;
+import java.util.regex.Pattern;
 
-class ClientController {
-    public Vector<Broadcast> broadcasts = new Vector<>();
-    public void addBroadcast(Broadcast broadcast) {
-        broadcasts.add(broadcast);
-    }
-}
+class ClientThread extends Thread {
+    private Socket socket;
+    private Vector<String> filesToShare;
 
-class ClientThread extends Network {
-    private ClientController controller;
-
-    public ClientThread(Socket socket, ClientController controller) {
-        super(socket);
-        this.controller = controller;
+    ClientThread(Socket socket, Vector<String> filesToShare) {
+        this.socket = socket;
+        this.filesToShare = filesToShare;
     }
 
-    private Vector<Broadcast> toRemove = new Vector<>();
+    private void getSharedFiles(OutputStream outputStream, List<String> args) throws IOException {
+        String joined = String.join("@", filesToShare);
+        TextMessage textMessage = new TextMessage(joined);
+        outputStream.write(textMessage.getBytes());
+        outputStream.flush();
+    }
+
+    private void getFile(OutputStream outputStream, List<String> args) throws IOException {
+        String filePath = args.get(0);
+        File file = new File(filePath);
+        FileMessage fileMessage = new FileMessage(file);
+        outputStream.write(fileMessage.getBytes());
+        outputStream.flush();
+    }
+
+    private void unknownCommand(OutputStream outputStream) throws IOException {
+        TextMessage textMessage = new TextMessage("Unknown command");
+        outputStream.write(textMessage.getBytes());
+        outputStream.flush();
+    }
 
     public void run() {
         try {
             InputStream input = socket.getInputStream();
             OutputStream output = socket.getOutputStream();
 
-            while (socket.isConnected()) {
-                for (Broadcast broadcast : controller.broadcasts) {
-                    System.out.println("Sending file..");
-                    broadcast.broadcast(output);
-                    output.flush();
-                    toRemove.add(broadcast);
+            boolean shouldClose = false;
+            while (!shouldClose) {
+                String msg = TextMessage.construct(input);
+                List<String> split = Arrays.stream(msg.split(Pattern.quote(" "))).toList();
+                List<String> args = split.subList(1, split.size());
+                String cmd = split.get(0);
+                switch (cmd) {
+                    case "/getSharedFiles" -> {
+                        getSharedFiles(output, args);
+                        continue;
+                    }
+                    case "/getFile" -> {
+                        getFile(output, args);
+                        continue;
+                    }
+                    case "/exit" -> {
+                        socket.close();
+                        shouldClose = true;
+                    }
                 }
-
-                for (Broadcast broadcast : toRemove) {
-                    controller.broadcasts.remove(broadcast);
-                }
-                toRemove.clear();
+                System.out.printf("Unknown msg: %s\n", msg);
+                unknownCommand(output);
             }
 
-            socket.close();
-        } catch (IOException ex) {
-            System.out.println("Server exception: " + ex.getMessage());
-            ex.printStackTrace();
+        } catch (IOException exception) {
+            System.err.println(exception.getMessage());
         }
     }
 }
@@ -54,32 +80,14 @@ public class Server extends Thread {
     private final String ip;
     private final int port;
 
-    private Map<String, ClientThread> clientThreads;
-    private Map<String, ClientController> clientControllerMap = new HashMap<>();
-
-    public String[] getControllers() {
-        return clientControllerMap.keySet().toArray(new String[0]);
-    }
-
-    public void sendFile(String path, String receiver) {
-        ClientController match = clientControllerMap.get(receiver);
-        if (match != null) {
-            try {
-                Broadcast broadcast = Broadcast.open(path);
-                match.addBroadcast(broadcast);
-            } catch (IOException exception) {
-                System.err.printf("File not found: %s%n", path);
-            }
-        }
-    }
-
-    public Server(String ip, int port) {
+    public Server(String ip, int port, Vector<String> filesToShare) {
         this.ip = ip;
         this.port = port;
-        clientThreads = new HashMap<>();
+        this.filesToShare = filesToShare;
     }
 
-    ServerSocket serverSocket;
+    private ServerSocket serverSocket;
+    private Vector<String> filesToShare;
 
     public void run() {
         try {
@@ -88,33 +96,10 @@ public class Server extends Thread {
 
             while (true) {
                 Socket socket = serverSocket.accept();
-                final String address = socket.getInetAddress().getHostAddress();
+                System.out.printf("New client connected, address: %s%n", socket.getInetAddress().getHostAddress());
 
-                {
-                    System.out.println("1. Match found");
-                    ClientThread match = clientThreads.get(address);
-                    if (match != null) {
-                        match.socket.close();
-                        clientThreads.remove(address);
-                    }
-                }
-
-                {
-                    System.out.println("2. Match found");
-                    ClientController match = clientControllerMap.get(address);
-                    if (match != null) {
-                        clientControllerMap.remove(address);
-                    }
-                }
-
-                System.out.printf("New client connected, address: %s%n", address);
-
-                clientControllerMap.put(address, new ClientController());
-
-                ClientThread clientThread = new ClientThread(socket, clientControllerMap.get(address));
+                ClientThread clientThread = new ClientThread(socket, filesToShare);
                 clientThread.start();
-
-                clientThreads.put(address, clientThread);
             }
         } catch (IOException ex) {
             System.out.println("Closing server..");
@@ -125,7 +110,7 @@ public class Server extends Thread {
         try {
             serverSocket.close();
         } catch (IOException exception) {
-            exception.printStackTrace();
+//            exception.printStackTrace();
         }
     }
 }
