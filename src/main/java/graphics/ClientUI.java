@@ -1,9 +1,12 @@
 package graphics;
 
 import app.MainActivity;
+import common.ImGuiHelper;
 import common.IndirectReference;
+import common.Size;
 import connection.Client;
 import imgui.ImGui;
+import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImString;
 
 import java.awt.*;
@@ -35,9 +38,12 @@ public class ClientUI extends UIInterface {
     }
 
     public void onUpdate(IndirectReference<MainActivity.Mode> mode) {
-        ImGui.begin("Client");
-        if (ImGui.button("Back")) { mode.set(MainActivity.Mode.None); }
-        ImGui.separator();
+        ImGuiHelper.maximizeNextWindow(window.getSize());
+
+        ImGui.begin("Client", ImGuiWindowFlags.NoMove | ImGuiWindowFlags.MenuBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize);
+
+        ImGuiHelper.renderMenu(mode, window);
+
         ImGui.text("Client info:");
         ImGui.inputText("IP", ip);
         ImGui.inputInt("Port", port);

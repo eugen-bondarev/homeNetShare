@@ -1,14 +1,15 @@
 package graphics;
 
 import app.MainActivity;
+import common.ImGuiHelper;
 import common.IndirectReference;
 import common.RemovableList;
+import common.Size;
 import connection.Server;
 import java.util.Vector;
 
-import imgui.ImColor;
-import imgui.ImVec2;
-import imgui.ImGui;
+import imgui.*;
+import imgui.flag.*;
 import imgui.type.ImString;
 
 public class ServerUI extends UIInterface {
@@ -30,9 +31,11 @@ public class ServerUI extends UIInterface {
     }
 
     public void onUpdate(IndirectReference<MainActivity.Mode> mode) {
-        ImGui.begin("Server");
-        if (ImGui.button("Back")) { mode.set(MainActivity.Mode.None); }
-        ImGui.separator();
+        ImGuiHelper.maximizeNextWindow(window.getSize());
+        ImGui.begin("Server", ImGuiWindowFlags.NoMove | ImGuiWindowFlags.MenuBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse);
+
+        ImGuiHelper.renderMenu(mode, window);
+
         ImGui.text("Server info:");
         ImGui.inputText("IP", ip);
         ImGui.inputInt("Port", port);
@@ -59,9 +62,11 @@ public class ServerUI extends UIInterface {
         vMax.x += ImGui.getWindowPos().x;
         vMax.y += ImGui.getWindowPos().y;
 
-        float cursorX = ImGui.getCursorPosX();
         float cursorY = ImGui.getCursorPosY();
-        ImGui.getForegroundDrawList().addRect(cursorX, cursorY + 6, vMax.x, vMax.y, ImColor.intToColor(255, 255, 0, 255));
+
+        ImVec4 col = ImGui.getStyle().getColor(ImGuiCol.TabHovered);
+        ImGui.getForegroundDrawList().addRect(vMin.x, cursorY, vMax.x, vMax.y, ImColor.floatToColor(col.x, col.y, col.z, col.w));
+
         ImGui.spacing();
 
         if (ImGui.getIO().getWantCaptureMouse()) {
@@ -75,6 +80,7 @@ public class ServerUI extends UIInterface {
 
         for (int i = 0; i < filesToShare.getList().size(); ++i) {
             ImString item = filesToShare.getList().get(i);
+            ImGui.setCursorPosX(ImGui.getCursorPosX() + 4);
             if (ImGui.inputText(String.format("File #%d", i), item)) {
                 share();
             }

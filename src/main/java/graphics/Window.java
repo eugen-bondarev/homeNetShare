@@ -5,8 +5,8 @@ import common.Size;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 
-import imgui.ImFontAtlas;
 import imgui.ImFontConfig;
+import imgui.ImGuiStyle;
 import org.lwjgl.glfw.Callbacks;
 
 import imgui.ImGui;
@@ -20,8 +20,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
-import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +45,6 @@ class ImGuiDevice extends IFrameWorker {
             tempFile.deleteOnExit();
 
             try (FileOutputStream out = new FileOutputStream(tempFile)) {
-                //copy stream
                 byte[] buffer = new byte[1024];
                 int bytesRead;
                 while ((bytesRead = in.read(buffer)) != -1) {
@@ -70,15 +67,16 @@ class ImGuiDevice extends IFrameWorker {
         ImGui.getIO().setConfigFlags(ImGuiConfigFlags.ViewportsEnable);
         ImGui.getIO().setConfigFlags(ImGuiConfigFlags.DockingEnable);
 
-
-        File f = getResourceAsFile("Roboto-Regular.ttf");
-        try {
-            byte[] content = Files.readAllBytes(f.toPath());
-            ImFontConfig config = new ImFontConfig();
-            config.setFontDataOwnedByAtlas(false);
-            ImGui.getIO().getFonts().addFontFromMemoryTTF(content, 16, config);
-        } catch (IOException exception) {
-            exception.printStackTrace();
+        File fontFile = getResourceAsFile("Roboto-Regular.ttf");
+        if (fontFile != null) {
+            try {
+                byte[] fontFileContent = Files.readAllBytes(fontFile.toPath());
+                ImFontConfig fontConfig = new ImFontConfig();
+                fontConfig.setFontDataOwnedByAtlas(false);
+                ImGui.getIO().getFonts().addFontFromMemoryTTF(fontFileContent, 14, fontConfig);
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
         }
 
         implGlfw.init(this.handle, true);
@@ -127,6 +125,37 @@ public class Window {
         return dragAndDropItems;
     }
 
+
+    private boolean darkThemeIsSet = false;
+
+    private void setLightTheme() {
+        ImGui.styleColorsLight();
+        ImGuiStyle style = ImGui.getStyle();
+        style.setFrameRounding(3.0f);
+        style.setFramePadding(10, 5);
+        style.setWindowBorderSize(0);
+        style.setFrameBorderSize(1);
+        darkThemeIsSet = false;
+    }
+
+    private void setDarkTheme() {
+        ImGui.styleColorsDark();
+        ImGuiStyle style = ImGui.getStyle();
+        style.setFrameRounding(3.0f);
+        style.setFramePadding(10, 5);
+        style.setWindowBorderSize(0);
+        style.setFrameBorderSize(0);
+        darkThemeIsSet = true;
+    }
+
+    public void toggleTheme() {
+        if (darkThemeIsSet) {
+            setLightTheme();
+        } else {
+            setDarkTheme();
+        }
+    }
+
     public Window(Size size, String title, int flags) throws RuntimeException {
         if (!glfwInit()) {
             throw new RuntimeException("Failed to initialize glfw.");
@@ -147,6 +176,8 @@ public class Window {
         GL.createCapabilities();
 
         imGuiDevice = new ImGuiDevice(handle);
+        setDarkTheme();
+//        setLightTheme();
     }
 
     public Window(Size size, String title) {

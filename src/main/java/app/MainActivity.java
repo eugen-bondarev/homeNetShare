@@ -1,5 +1,6 @@
 package app;
 
+import common.ImGuiHelper;
 import graphics.Window;
 import common.IndirectReference;
 import common.Size;
@@ -7,6 +8,8 @@ import connection.Client;
 import connection.Server;
 import graphics.ClientUI;
 import graphics.ServerUI;
+import imgui.ImVec2;
+import imgui.flag.ImGuiStyleVar;
 import imgui.flag.ImGuiWindowFlags;
 import imgui.ImGui;
 
@@ -18,7 +21,6 @@ public class MainActivity {
         Both
     }
 
-//    private IndirectReference<Mode> mode = new IndirectReference<>(Mode.None);
     private IndirectReference<Mode> mode = new IndirectReference<>(Mode.Server);
     private Window window;
 
@@ -36,17 +38,14 @@ public class MainActivity {
         clientUI = new ClientUI(window, client, clientBridge);
     }
 
-    private void renderDockSpace() {
-        ImGui.setNextWindowPos(0, 0);
-        Size windowSize = window.getSize();
-        ImGui.setNextWindowSize(windowSize.getWidth(), windowSize.getHeight());
-        ImGui.begin("homeNetShare", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize);
-        ImGui.dockSpace(ImGui.getID(0));
-        ImGui.end();
-    }
-
     private void renderMenuUI() {
-        ImGui.begin("Start menu");
+
+        ImGuiHelper.maximizeNextWindow(window.getSize());
+
+        ImGui.begin("Start menu", ImGuiWindowFlags.NoMove | ImGuiWindowFlags.MenuBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize);
+
+        ImGuiHelper.renderMenu(mode, window, false);
+
         if (ImGui.button("Share files")) {
             mode.set(Mode.Server);
         }
@@ -62,8 +61,6 @@ public class MainActivity {
     public void onUpdate() {
         Mode currentFrameMode = mode.get();
 
-        renderDockSpace();
-
         switch (currentFrameMode) {
             case Both -> {
                 serverUI.onUpdate(mode);
@@ -71,6 +68,7 @@ public class MainActivity {
                 break;
             }
             case Server -> {
+//                ImGui.showDemoWindow();
                 serverUI.onUpdate(mode);
                 break;
             }
