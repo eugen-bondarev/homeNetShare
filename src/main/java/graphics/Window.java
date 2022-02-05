@@ -11,12 +11,11 @@ import imgui.flag.ImGuiConfigFlags;
 import imgui.glfw.ImGuiImplGlfw;
 import imgui.gl3.ImGuiImplGl3;
 import org.lwjgl.glfw.GLFWDropCallback;
-import org.lwjgl.glfw.GLFWDropCallbackI;
 import org.lwjgl.opengl.GL;
 
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 abstract class IFrameWorker {
     abstract public void beginFrame();
@@ -35,6 +34,7 @@ class ImGuiDevice extends IFrameWorker {
 
         ImGui.createContext();
         ImGui.getIO().setConfigFlags(ImGuiConfigFlags.ViewportsEnable);
+        ImGui.getIO().setConfigFlags(ImGuiConfigFlags.DockingEnable);
 
         implGlfw.init(this.handle, true);
         implGl3.init();
@@ -110,6 +110,13 @@ public class Window {
 
     public boolean shouldClose() {
         return glfwWindowShouldClose(handle);
+    }
+
+    public Size getSize() {
+        int[] width = new int[1];
+        int[] height = new int[1];
+        glfwGetFramebufferSize(handle, width, height);
+        return new Size(width[0], height[0]);
     }
 
     public void beginFrame() {

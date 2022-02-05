@@ -1,5 +1,7 @@
 package graphics;
 
+import app.MainActivity;
+import common.IndirectReference;
 import common.RemovableList;
 import connection.Server;
 import java.util.Vector;
@@ -24,8 +26,10 @@ public class ServerUI extends UIInterface {
         }
     }
 
-    public void onUpdate() {
+    public void onUpdate(IndirectReference<MainActivity.Mode> mode) {
         ImGui.begin("Server");
+        if (ImGui.button("Back")) { mode.set(MainActivity.Mode.None); }
+        ImGui.separator();
         ImGui.text("Server info:");
         ImGui.inputText("IP", ip);
         ImGui.inputInt("Port", port);

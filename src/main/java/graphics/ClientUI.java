@@ -1,5 +1,7 @@
 package graphics;
 
+import app.MainActivity;
+import common.IndirectReference;
 import connection.Client;
 import imgui.ImGui;
 import imgui.type.ImString;
@@ -32,8 +34,10 @@ public class ClientUI extends UIInterface {
         setOutputDir();
     }
 
-    public void onUpdate() {
+    public void onUpdate(IndirectReference<MainActivity.Mode> mode) {
         ImGui.begin("Client");
+        if (ImGui.button("Back")) { mode.set(MainActivity.Mode.None); }
+        ImGui.separator();
         ImGui.text("Client info:");
         ImGui.inputText("IP", ip);
         ImGui.inputInt("Port", port);
