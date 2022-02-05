@@ -156,6 +156,9 @@ public class Window {
         }
     }
 
+    private long standardCursor;
+    private long handCursor;
+
     public Window(Size size, String title, int flags) throws RuntimeException {
         if (!glfwInit()) {
             throw new RuntimeException("Failed to initialize glfw.");
@@ -177,7 +180,9 @@ public class Window {
 
         imGuiDevice = new ImGuiDevice(handle);
         setDarkTheme();
-//        setLightTheme();
+
+        standardCursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+        handCursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
     }
 
     public Window(Size size, String title) {
@@ -186,6 +191,14 @@ public class Window {
 
     public boolean shouldClose() {
         return glfwWindowShouldClose(handle);
+    }
+
+    public void setDefaultCursor() {
+        glfwSetCursor(handle, standardCursor);
+    }
+
+    public void setHandCursor() {
+        glfwSetCursor(handle, handCursor);
     }
 
     public Size getSize() {

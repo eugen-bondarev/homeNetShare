@@ -2,10 +2,20 @@ package common;
 
 import app.MainActivity;
 import graphics.Window;
+import imgui.ImColor;
 import imgui.ImGui;
+import imgui.ImVec2;
+import imgui.ImVec4;
 import imgui.flag.ImGuiCol;
+import imgui.flag.ImGuiCond;
 import imgui.flag.ImGuiStyleVar;
+import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImBoolean;
+
+import java.awt.*;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class ImGuiHelper {
     public static void maximizeNextWindow(Size windowSize) {
@@ -13,7 +23,43 @@ public class ImGuiHelper {
         ImGui.setNextWindowSize(windowSize.getWidth(), windowSize.getHeight());
     }
 
-//    private static boolean aboutPopup = false;
+    public static boolean urlText(String url, String title) {
+        boolean hovered = false;
+
+        ImVec4 col = ImGui.getStyle().getColor(ImGuiCol.ButtonHovered);
+        ImGui.pushStyleColor(ImGuiCol.Text, col.x, col.y, col.z, col.w);
+        ImGui.text(title == null ? url : title);
+        ImGui.popStyleColor();
+        if (ImGui.isItemHovered())
+        {
+            hovered = true;
+            if( ImGui.isMouseClicked(0) )
+            {
+                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                    try {
+                        Desktop.getDesktop().browse(new URI(url));
+                    } catch (URISyntaxException exception) {
+                        exception.printStackTrace();
+                    } catch (IOException exception) {
+                        exception.printStackTrace();
+                    }
+                }
+            }
+            {
+                ImVec2 min = ImGui.getItemRectMin();
+                ImVec2 max = ImGui.getItemRectMax();
+                min.y = max.y;
+
+                ImGui.getWindowDrawList().addLine(min.x, min.y, max.x, max.y, ImColor.floatToColor(col.x, col.y, col.z, col.w));
+            }
+        }
+        return hovered;
+    }
+
+    public static boolean urlText(String url) {
+        return urlText(url, null);
+    }
+
     private static ImBoolean aboutPopup = new ImBoolean(false);
 
     public static void renderMenu(IndirectReference<MainActivity.Mode> mode, Window window, boolean showBackButton) {
@@ -50,10 +96,38 @@ public class ImGuiHelper {
         }
 
         if (aboutPopup.get()) {
-            ImGui.openPopup("popup");
+            ImGui.openPopup("About");
         }
-        if (ImGui.beginPopupModal("popup", aboutPopup)) {
-            ImGui.text("All those beautiful files will be deleted.\nThis operation cannot be undone!\n\n");
+
+        int flags = ImGuiWindowFlags.NoCollapse |
+                ImGuiWindowFlags.NoResize |
+                ImGuiWindowFlags.NoMove;
+
+        ImVec2 center = ImGui.getMainViewport().getCenter();
+        ImGui.setNextWindowPos(center.x, center.y, ImGuiCond.Appearing, 0.5f, 0.5f);
+
+        ImGui.setNextWindowSize(0, 0);
+        if (ImGui.beginPopupModal("About", aboutPopup, flags)) {
+            boolean linkIsHovered = false;
+
+            ImGui.text("HomeNetShare - A simple utility for sharing files using Wi-Fi.");
+            ImGui.text("Created by"); ImGui.sameLine();
+            ImGui.setCursorPosX(ImGui.getCursorPosX() - 4);
+            if (ImGuiHelper.urlText("https://github.com/eugen-bondarev", "Eugene Bondarev")) {
+                linkIsHovered = true;
+            }
+            ImGui.separator();
+
+            ImGui.text("Project on GitHub:"); ImGui.sameLine();
+            String projectUrl = "https://github.com/eugen-bondarev/homeNetShare";
+            if (ImGuiHelper.urlText(projectUrl)) { linkIsHovered = true; }
+            ImGui.text("Author:"); ImGui.sameLine();
+            String authorUrl = "https://github.com/eugen-bondarev";
+            if (ImGuiHelper.urlText(authorUrl)) { linkIsHovered = true; }
+
+            if (linkIsHovered) {
+                window.setHandCursor();
+            }
 
             ImGui.endPopup();
         }
