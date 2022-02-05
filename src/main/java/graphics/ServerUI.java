@@ -5,8 +5,11 @@ import common.IndirectReference;
 import common.RemovableList;
 import connection.Server;
 import java.util.Vector;
-import imgui.type.ImString;
+
+import imgui.ImColor;
+import imgui.ImVec2;
 import imgui.ImGui;
+import imgui.type.ImString;
 
 public class ServerUI extends UIInterface {
     private Server server;
@@ -46,7 +49,20 @@ public class ServerUI extends UIInterface {
             }
         }
 
-        ImGui.text("Files to share:");
+        ImGui.text("Drag and drop files here:");
+
+        ImVec2 vMin = ImGui.getWindowContentRegionMin();
+        ImVec2 vMax = ImGui.getWindowContentRegionMax();
+
+        vMin.x += ImGui.getWindowPos().x;
+        vMin.y += ImGui.getWindowPos().y;
+        vMax.x += ImGui.getWindowPos().x;
+        vMax.y += ImGui.getWindowPos().y;
+
+        float cursorX = ImGui.getCursorPosX();
+        float cursorY = ImGui.getCursorPosY();
+        ImGui.getForegroundDrawList().addRect(cursorX, cursorY + 6, vMax.x, vMax.y, ImColor.intToColor(255, 255, 0, 255));
+        ImGui.spacing();
 
         if (ImGui.getIO().getWantCaptureMouse()) {
             if (window.getDragAndDropItems().size() != 0) {
@@ -55,11 +71,6 @@ public class ServerUI extends UIInterface {
                     share();
                 }
             }
-        }
-
-        if (ImGui.button("Add")) {
-            filesToShare.getList().add(new ImString(512));
-            share();
         }
 
         for (int i = 0; i < filesToShare.getList().size(); ++i) {
