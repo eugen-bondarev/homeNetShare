@@ -1,11 +1,11 @@
 package graphics;
 
 import app.MainActivity;
-import common.ImGuiHelper;
-import common.IndirectReference;
-import common.RemovableList;
-import common.Size;
+import common.*;
 import connection.Server;
+
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.util.Vector;
 
 import imgui.*;
@@ -18,9 +18,11 @@ public class ServerUI extends UIInterface {
     private RemovableList<ImString> filesToShare = new RemovableList<>();
     private Vector<String> vecFilesToShare = new Vector<>();
 
-    public ServerUI(Window window, Server server) {
+    private ServerSocket serverSocket;
+
+    public ServerUI(Window window) {
         super(window);
-        this.server = server;
+        ip.set(Address.getAddressInHomeNet());
     }
 
     private void share() {
@@ -42,18 +44,27 @@ public class ServerUI extends UIInterface {
 
         if (server == null) {
             if (ImGui.button("Start server")) {
-                server = new Server(ip.get(), port.get(), vecFilesToShare);
+                try {
+                    serverSocket = new ServerSocket(port.get(), 0, InetAddress.getByName(ip.get()));
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
+                server = new Server(serverSocket, ip.get(), port.get(), vecFilesToShare);
                 server.start();
             }
         } else {
             if (ImGui.button("Stop server")) {
+                try {
+                    serverSocket.close();
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
                 server.close();
                 server = null;
             }
         }
 
         ImGui.text("Drag and drop files here:");
-
         ImVec2 vMin = ImGui.getWindowContentRegionMin();
         ImVec2 vMax = ImGui.getWindowContentRegionMax();
 
@@ -67,34 +78,51 @@ public class ServerUI extends UIInterface {
         ImVec4 col = ImGui.getStyle().getColor(ImGuiCol.TabHovered);
         ImGui.getForegroundDrawList().addRect(vMin.x, cursorY, vMax.x, vMax.y, ImColor.floatToColor(col.x, col.y, col.z, col.w));
 
-        ImGui.spacing();
+        ImGui.beginChild("DnD");
+        {
 
-        if (ImGui.getIO().getWantCaptureMouse()) {
-            if (window.getDragAndDropItems().size() != 0) {
-                for (String dragAndDropItem : window.getDragAndDropItems()) {
-                    filesToShare.getList().add(new ImString(dragAndDropItem));
-                    share();
+            ImGui.spacing();
+
+            if (ImGui.getIO().getWantCaptureMouse()) {
+                if (window.getDragAndDropItems().size() != 0) {
+                    for (String dragAndDropItem : window.getDragAndDropItems()) {
+                        filesToShare.getList().add(new ImString(dragAndDropItem));
+                        share();
+                    }
                 }
             }
-        }
 
-        for (int i = 0; i < filesToShare.getList().size(); ++i) {
-            ImString item = filesToShare.getList().get(i);
-            ImGui.setCursorPosX(ImGui.getCursorPosX() + 4);
-            if (ImGui.inputText(String.format("File #%d", i), item)) {
+            for (int i = 0; i < filesToShare.getList().size(); ++i) {
+                ImString item = filesToShare.getList().get(i);
+                ImGui.setCursorPosX(ImGui.getCursorPosX() + 4);
+                if (ImGui.inputText(String.format("File #%d", i), item)) {
+                    share();
+                }
+
+                ImGui.sameLine();
+                if (ImGui.button(String.format("x##%d", i))) {
+                    filesToShare.enqueueRemove(i);
+                }
+            }
+
+            if (filesToShare.remove()) {
                 share();
             }
 
-            ImGui.sameLine();
-            if (ImGui.button(String.format("x##%d", i))) {
-                filesToShare.enqueueRemove(i);
-            }
-        }
-
-        if (filesToShare.remove()) {
-            share();
+            ImGui.endChild();
         }
 
         ImGui.end();
+    }
+
+    public void close() {
+        if (serverSocket == null) {
+            return;
+        }
+        try {
+            serverSocket.close();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
     }
 }

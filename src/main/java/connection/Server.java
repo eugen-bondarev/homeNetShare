@@ -1,5 +1,6 @@
 package connection;
 
+import common.Address;
 import common.File;
 import connection.messages.FileMessage;
 import connection.messages.TextMessage;
@@ -7,7 +8,6 @@ import connection.messages.TextMessage;
 import java.io.*;
 import java.util.*;
 import java.net.Socket;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.regex.Pattern;
 
@@ -18,6 +18,17 @@ class ClientThread extends Thread {
     ClientThread(Socket socket, Vector<String> filesToShare) {
         this.socket = socket;
         this.filesToShare = filesToShare;
+    }
+
+    private void getName(OutputStream outputStream, List<String> args) throws IOException {
+        ConnectionHistory.Connection establishedConnection = new ConnectionHistory.Connection(
+            Address.getName(),
+            Address.getAddressInHomeNet()
+        );
+
+        TextMessage textMessage = new TextMessage(establishedConnection.toString());
+        outputStream.write(textMessage.getBytes());
+        outputStream.flush();
     }
 
     private void getSharedFiles(OutputStream outputStream, List<String> args) throws IOException {
@@ -53,6 +64,13 @@ class ClientThread extends Thread {
                 List<String> args = split.subList(1, split.size());
                 String cmd = split.get(0);
                 switch (cmd) {
+                    case "/didStateChange" -> {
+                        continue;
+                    }
+                    case "/getName" -> {
+                        getName(output, args);
+                        continue;
+                    }
                     case "/getSharedFiles" -> {
                         getSharedFiles(output, args);
                         continue;
@@ -81,7 +99,8 @@ public class Server extends Thread {
     private final String ip;
     private final int port;
 
-    public Server(String ip, int port, Vector<String> filesToShare) {
+    public Server(ServerSocket serverSocket, String ip, int port, Vector<String> filesToShare) {
+        this.serverSocket = serverSocket;
         this.ip = ip;
         this.port = port;
         this.filesToShare = filesToShare;
@@ -92,7 +111,6 @@ public class Server extends Thread {
 
     public void run() {
         try {
-            serverSocket = new ServerSocket(port, 0, InetAddress.getByName(ip));
             System.out.println("Server is listening on port " + port);
 
             while (true) {
@@ -111,7 +129,6 @@ public class Server extends Thread {
         try {
             serverSocket.close();
         } catch (IOException exception) {
-//            exception.printStackTrace();
         }
     }
 }

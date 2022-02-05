@@ -119,12 +119,9 @@ public class Window {
     }
 
     private List<String> dragAndDropItems = new ArrayList<>();
-    private boolean dragAndDropFlag = false;
-
     public List<String> getDragAndDropItems() {
         return dragAndDropItems;
     }
-
 
     private boolean darkThemeIsSet = false;
 
@@ -173,7 +170,6 @@ public class Window {
                 String name = GLFWDropCallback.getName(names, i);
                 dragAndDropItems.add(name);
             }
-            dragAndDropFlag = true;
         });
 
         GL.createCapabilities();
@@ -218,7 +214,6 @@ public class Window {
         glfwSwapBuffers(handle);
 
         dragAndDropItems.clear();
-        dragAndDropFlag = false;
     }
 
     public void close() {

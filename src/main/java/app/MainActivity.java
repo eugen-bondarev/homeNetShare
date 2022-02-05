@@ -1,15 +1,10 @@
 package app;
 
 import common.ImGuiHelper;
-import graphics.Window;
 import common.IndirectReference;
-import common.Size;
-import connection.Client;
-import connection.Server;
+import graphics.Window;
 import graphics.ClientUI;
 import graphics.ServerUI;
-import imgui.ImVec2;
-import imgui.flag.ImGuiStyleVar;
 import imgui.flag.ImGuiWindowFlags;
 import imgui.ImGui;
 
@@ -24,22 +19,16 @@ public class MainActivity {
     private IndirectReference<Mode> mode = new IndirectReference<>(Mode.Server);
     private Window window;
 
-    private Server server;
-    private Client client;
-
     private ServerUI serverUI;
     private ClientUI clientUI;
 
-    private final Client.Bridge clientBridge = new Client.Bridge();
-
     public MainActivity(Window window) {
         this.window = window;
-        serverUI = new ServerUI(window, server);
-        clientUI = new ClientUI(window, client, clientBridge);
+        serverUI = new ServerUI(window);
+        clientUI = new ClientUI(window);
     }
 
     private void renderMenuUI() {
-
         ImGuiHelper.maximizeNextWindow(window.getSize());
 
         ImGui.begin("Start menu", ImGuiWindowFlags.NoMove | ImGuiWindowFlags.MenuBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize);
@@ -84,14 +73,7 @@ public class MainActivity {
     }
 
     public void close() {
-        if (server != null) {
-            server.close();
-            server = null;
-        }
-
-        if (client != null) {
-            client.commands.add("/exit");
-            client = null;
-        }
+        serverUI.close();
+        clientUI.close();
     }
 }

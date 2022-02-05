@@ -7,7 +7,10 @@ import imgui.type.ImString;
 
 abstract public class UIInterface {
     protected Window window;
-    protected final ImString ip = new ImString("192.168.178.30");
+
+    protected static final int ITEM_WIDTH = 140;
+
+    protected final ImString ip = new ImString("192.168.", 15);
     protected final ImInt port = new ImInt(8080);
 
     protected UIInterface(Window window) {
