@@ -1,6 +1,7 @@
 package connection;
 
 import common.Address;
+import common.Cmd;
 import common.File;
 import connection.messages.FileMessage;
 import connection.messages.TextMessage;
@@ -60,23 +61,22 @@ class ClientThread extends Thread {
             boolean shouldClose = false;
             while (!shouldClose) {
                 String msg = TextMessage.construct(input);
-                List<String> split = Arrays.stream(msg.split(Pattern.quote(" "))).toList();
-                List<String> args = split.subList(1, split.size());
-                String cmd = split.get(0);
-                switch (cmd) {
+                Cmd cmd = Cmd.fromString(msg);
+
+                switch (cmd.getCmd()) {
                     case "/didStateChange" -> {
                         continue;
                     }
                     case "/getName" -> {
-                        getName(output, args);
+                        getName(output, cmd.getArgs());
                         continue;
                     }
                     case "/getSharedFiles" -> {
-                        getSharedFiles(output, args);
+                        getSharedFiles(output, cmd.getArgs());
                         continue;
                     }
                     case "/getFile" -> {
-                        getFile(output, args);
+                        getFile(output, cmd.getArgs());
                         continue;
                     }
                     case "/exit" -> {

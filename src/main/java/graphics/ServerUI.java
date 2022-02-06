@@ -80,7 +80,6 @@ public class ServerUI extends UIInterface {
 
         ImGui.beginChild("DnD");
         {
-
             ImGui.spacing();
 
             if (ImGui.getIO().getWantCaptureMouse()) {

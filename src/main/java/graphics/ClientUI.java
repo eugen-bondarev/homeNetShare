@@ -2,6 +2,7 @@ package graphics;
 
 import app.MainActivity;
 import common.Address;
+import common.Cmd;
 import common.ImGuiHelper;
 import common.IndirectReference;
 import connection.Client;
@@ -17,6 +18,8 @@ import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class ClientUI extends UIInterface {
     private Client client;
@@ -136,8 +139,8 @@ public class ClientUI extends UIInterface {
                 ImGui.beginChild("Files");
                 for (int i = 0; i < clientBridge.getSharedFiles().size(); ++i) {
                     if (!clientBridge.getSharedFiles().get(i).isEmpty() && ImGui.button(clientBridge.getSharedFiles().get(i))) {
-                        String cmd = String.format("/getFile %s", clientBridge.getSharedFiles().get(i));
-                        client.passCommand(cmd);
+                        Cmd cmd = new Cmd("/getFile", clientBridge.getSharedFiles().get(i));
+                        client.passCommand(cmd.toString());
                     }
                 }
                 ImGui.endChild();

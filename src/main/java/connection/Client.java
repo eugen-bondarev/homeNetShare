@@ -1,6 +1,7 @@
 package connection;
 
 import common.Address;
+import common.Cmd;
 import common.File;
 import connection.messages.FileMessage;
 import connection.messages.TextMessage;
@@ -122,7 +123,7 @@ public class Client extends Network {
             boolean shouldClose = false;
 
             // Get to know each other.
-            commands.add(String.format("/getName %s", Address.getName()));
+            commands.add(new Cmd("/getName", Address.getName()).toString());
 
             startTime = System.currentTimeMillis();
             while (!shouldClose)
@@ -131,12 +132,11 @@ public class Client extends Network {
                 if (commands.size() == 0) continue;
 
                 String value = commands.get(0);
+                String cmd = value.split(Pattern.quote("><"))[0];
 
                 TextMessage textMessage = new TextMessage(value);
                 output.write(textMessage.getBytes());
                 output.flush();
-
-                String cmd = value.split(Pattern.quote(" "))[0];
 
                 switch (cmd) {
                     case "/getName" -> {
