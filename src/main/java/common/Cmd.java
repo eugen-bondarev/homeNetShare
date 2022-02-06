@@ -26,6 +26,10 @@ public class Cmd {
         this(cmd, Arrays.asList(new String[] { arg }));
     }
 
+    public Cmd(String cmd) {
+        this(cmd, Arrays.asList(new String[] {}));
+    }
+
     public String toString() {
         String fullCmd = cmd;
         for (int i = 0; i < args.size(); ++i) {

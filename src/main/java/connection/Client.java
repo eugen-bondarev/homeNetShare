@@ -15,7 +15,7 @@ import java.net.UnknownHostException;
 import java.util.regex.Pattern;
 
 public class Client extends Network {
-    private Vector<String> commands = new Vector<>();
+    private Vector<Cmd> commands = new Vector<>();
 
     private String ip;
     private int port;
@@ -60,7 +60,7 @@ public class Client extends Network {
         }
     }
 
-    public void passCommand(String command) {
+    public void passCommand(Cmd command) {
         commands.add(command);
     }
 
@@ -82,7 +82,8 @@ public class Client extends Network {
         startTime = current;
 
         if (elapsedTime >= 1000) {
-            commands.add("/getSharedFiles");
+            commands.add(new Cmd("/getSharedFiles"));
+//            commands.add("/getSharedFiles");
             elapsedTime = 0;
         } else {
             elapsedTime += deltaTime;
@@ -123,7 +124,7 @@ public class Client extends Network {
             boolean shouldClose = false;
 
             // Get to know each other.
-            commands.add(new Cmd("/getName", Address.getName()).toString());
+            commands.add(new Cmd("/getName", Address.getName()));
 
             startTime = System.currentTimeMillis();
             while (!shouldClose)
@@ -131,14 +132,13 @@ public class Client extends Network {
                 pollState();
                 if (commands.size() == 0) continue;
 
-                String value = commands.get(0);
-                String cmd = value.split(Pattern.quote("><"))[0];
+                Cmd value = commands.get(0);
 
-                TextMessage textMessage = new TextMessage(value);
+                TextMessage textMessage = new TextMessage(value.toString());
                 output.write(textMessage.getBytes());
                 output.flush();
 
-                switch (cmd) {
+                switch (value.getCmd()) {
                     case "/getName" -> {
                         getName(input);
                     }

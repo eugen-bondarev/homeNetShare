@@ -18,8 +18,6 @@ import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 public class ClientUI extends UIInterface {
     private Client client;
@@ -117,11 +115,11 @@ public class ClientUI extends UIInterface {
             }
             else {
                 if (ImGui.button("Disconnect from server", ITEM_WIDTH, 0)) {
-                    client.passCommand("/exit");
+                    client.passCommand(new Cmd("/exit"));
                     client = null;
                 }
                 if (ImGui.button("List shared files", ITEM_WIDTH, 0)) {
-                    client.passCommand("/getSharedFiles");
+                    client.passCommand(new Cmd("/getSharedFiles"));
                 }
                 ImGui.separator();
 
@@ -139,8 +137,7 @@ public class ClientUI extends UIInterface {
                 ImGui.beginChild("Files");
                 for (int i = 0; i < clientBridge.getSharedFiles().size(); ++i) {
                     if (!clientBridge.getSharedFiles().get(i).isEmpty() && ImGui.button(clientBridge.getSharedFiles().get(i))) {
-                        Cmd cmd = new Cmd("/getFile", clientBridge.getSharedFiles().get(i));
-                        client.passCommand(cmd.toString());
+                        client.passCommand(new Cmd("/getFile", clientBridge.getSharedFiles().get(i)));
                     }
                 }
                 ImGui.endChild();
@@ -153,6 +150,6 @@ public class ClientUI extends UIInterface {
         if (client == null) {
             return;
         }
-        client.passCommand("/exit");
+        client.passCommand(new Cmd("/exit"));
     }
 }
