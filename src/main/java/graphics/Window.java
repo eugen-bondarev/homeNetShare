@@ -114,6 +114,8 @@ public class Window {
     private final long handle;
     private final ImGuiDevice imGuiDevice;
 
+    public static final String VERSION = "1.0.0a";
+
     public static class Flags {
         public static final int NONE = 0;
     }
@@ -161,7 +163,7 @@ public class Window {
             throw new RuntimeException("Failed to initialize glfw.");
         }
         glfwDefaultWindowHints();
-        handle = glfwCreateWindow((int)size.getWidth(), (int)size.getHeight(), title, 0, 0);
+        handle = glfwCreateWindow((int)size.getWidth(), (int)size.getHeight(), String.format("%s v%s", title, VERSION), 0, 0);
         glfwMakeContextCurrent(handle);
         glfwSwapInterval(1);
 
@@ -175,7 +177,8 @@ public class Window {
         GL.createCapabilities();
 
         imGuiDevice = new ImGuiDevice(handle);
-        setDarkTheme();
+//        setDarkTheme();
+        setLightTheme();
 
         standardCursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
         handCursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);

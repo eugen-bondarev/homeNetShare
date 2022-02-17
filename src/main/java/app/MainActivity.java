@@ -16,7 +16,7 @@ public class MainActivity {
         Both
     }
 
-    private IndirectReference<Mode> mode = new IndirectReference<>(Mode.Server);
+    private IndirectReference<Mode> mode = new IndirectReference<>(Mode.None);
     private Window window;
 
     private ServerUI serverUI;
@@ -57,7 +57,6 @@ public class MainActivity {
                 break;
             }
             case Server -> {
-//                ImGui.showDemoWindow();
                 serverUI.onUpdate(mode);
                 break;
             }

@@ -116,6 +116,7 @@ public class ImGuiHelper {
             if (ImGuiHelper.urlText("https://github.com/eugen-bondarev", "Eugene Bondarev")) {
                 linkIsHovered = true;
             }
+            ImGui.text(String.format("Version: %s", Window.VERSION));
             ImGui.separator();
 
             ImGui.text("Project on GitHub:"); ImGui.sameLine();

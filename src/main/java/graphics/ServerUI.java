@@ -39,11 +39,15 @@ public class ServerUI extends UIInterface {
         ImGuiHelper.renderMenu(mode, window);
 
         ImGui.text("Server info:");
+
+        ImGui.setNextItemWidth(ITEM_WIDTH);
         ImGui.inputText("IP", ip);
+
+        ImGui.setNextItemWidth(ITEM_WIDTH);
         ImGui.inputInt("Port", port);
 
         if (server == null) {
-            if (ImGui.button("Start server")) {
+            if (ImGui.button("Start server", ITEM_WIDTH, 0)) {
                 try {
                     serverSocket = new ServerSocket(port.get(), 0, InetAddress.getByName(ip.get()));
                 } catch (Exception exception) {
@@ -53,7 +57,7 @@ public class ServerUI extends UIInterface {
                 server.start();
             }
         } else {
-            if (ImGui.button("Stop server")) {
+            if (ImGui.button("Stop server", ITEM_WIDTH, 0)) {
                 try {
                     serverSocket.close();
                 } catch (Exception exception) {
